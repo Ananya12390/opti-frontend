@@ -7,46 +7,78 @@ function getToken() {
 
 async function req<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
+
+  const headers: any = {
+    ...(options.body instanceof URLSearchParams
+      ? { "Content-Type": "application/x-www-form-urlencoded" }
+      : { "Content-Type": "application/json" }),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
+  };
+
   const res = await fetch(`${BASE}${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
+    headers,
   });
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Request failed" }));
     throw new Error(err.detail || `HTTP ${res.status}`);
   }
+
   if (res.status === 204) return undefined as T;
   return res.json();
 }
 
 export const api = {
-  login: (username: string, password: string) => {
+  // ✅ FIXED LOGIN (STORE TOKEN)
+  login: async (username: string, password: string) => {
     const body = new URLSearchParams({ username, password });
-    return fetch(`${BASE}/auth/login`, {
+
+    const res = await fetch(`${BASE}/auth/login`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
       body,
-    }).then(async (r) => {
-      if (!r.ok) throw new Error("Invalid credentials");
-      return r.json();
     });
+
+    if (!res.ok) {
+      throw new Error("Invalid credentials");
+    }
+
+    const data = await res.json();
+
+    // ⭐ IMPORTANT: store token
+    if (typeof window !== "undefined") {
+      localStorage.setItem("vg_token", data.access_token);
+      localStorage.setItem("vg_user", JSON.stringify(data.user));
+    }
+
+    return data;
   },
-  me: () => req<import("@/types").User>("/auth/me"),
+
+  me: () => req("/auth/me"),
+
   users: {
-    list: () => req<import("@/types").User[]>("/users"),
-    create: (data: object) => req("/users", { method: "POST", body: JSON.stringify(data) }),
-    delete: (id: number) => req(`/users/${id}`, { method: "DELETE" }),
+    list: () => req("/users"),
+    create: (data: object) =>
+      req("/users", { method: "POST", body: JSON.stringify(data) }),
+    delete: (id: number) =>
+      req(`/users/${id}`, { method: "DELETE" }),
   },
+
   assets: {
-    list: () => req<import("@/types").Asset[]>("/assets"),
-    get: (id: number) => req<import("@/types").Asset>(`/assets/${id}`),
-    create: (data: object) => req("/assets", { method: "POST", body: JSON.stringify(data) }),
-    update: (id: number, data: object) => req(`/assets/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-    delete: (id: number) => req(`/assets/${id}`, { method: "DELETE" }),
+    list: () => req("/assets"),
+    get: (id: number) => req(`/assets/${id}`),
+    create: (data: object) =>
+      req("/assets", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: number, data: object) =>
+      req(`/assets/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: number) =>
+      req(`/assets/${id}`, { method: "DELETE" }),
   },
-  stats: () => req<import("@/types").Stats>("/stats"),
-  roles: () => req<import("@/types").Role[]>("/roles"),
+
+  stats: () => req("/stats"),
+  roles: () => req("/roles"),
 };
