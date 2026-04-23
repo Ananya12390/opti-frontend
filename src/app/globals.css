@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── VaultGuard Design System ───────────────────────────────── */
+@layer base {
+  :root {
+    /* Brand: Deep Indigo + Electric Violet accent */
+    --background: 240 10% 97%;
+    --foreground: 240 15% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 15% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 15% 10%;
+
+    --primary: 252 87% 57%;           /* Electric Violet */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 8% 93%;
+    --secondary-foreground: 240 12% 20%;
+
+    --muted: 240 8% 94%;
+    --muted-foreground: 240 10% 48%;
+
+    --accent: 217 91% 60%;            /* Vivid Blue */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 8% 88%;
+    --input: 240 8% 88%;
+    --ring: 252 87% 57%;
+
+    --radius: 0.75rem;
+
+    /* VaultGuard custom tokens */
+    --vault-sidebar-bg: 244 55% 16%;
+    --vault-sidebar-fg: 240 30% 85%;
+    --vault-sidebar-accent: 252 87% 67%;
+    --vault-sidebar-hover: 244 40% 22%;
+    --vault-sidebar-active: 252 87% 57%;
+
+    --vault-success: 142 71% 45%;
+    --vault-warning: 38 92% 50%;
+    --vault-info: 217 91% 60%;
+  }
+
+  .dark {
+    --background: 240 15% 7%;
+    --foreground: 240 15% 92%;
+
+    --card: 240 13% 10%;
+    --card-foreground: 240 15% 92%;
+
+    --popover: 240 13% 10%;
+    --popover-foreground: 240 15% 92%;
+
+    --primary: 252 87% 65%;
+    --primary-foreground: 240 20% 5%;
+
+    --secondary: 240 12% 16%;
+    --secondary-foreground: 240 15% 75%;
+
+    --muted: 240 12% 15%;
+    --muted-foreground: 240 10% 50%;
+
+    --accent: 217 91% 65%;
+    --accent-foreground: 240 20% 5%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 10% 18%;
+    --input: 240 10% 18%;
+    --ring: 252 87% 65%;
+
+    /* Dark sidebar */
+    --vault-sidebar-bg: 244 65% 8%;
+    --vault-sidebar-fg: 240 25% 72%;
+    --vault-sidebar-accent: 252 87% 67%;
+    --vault-sidebar-hover: 244 50% 13%;
+    --vault-sidebar-active: 252 87% 57%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; font-feature-settings: "rlig" 1, "calt" 1; }
+  
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-muted; }
+  ::-webkit-scrollbar-thumb { @apply bg-muted-foreground/30 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-muted-foreground/50; }
+}
+
+/* ── Sidebar ───────────────────────────────────────────────── */
+.vault-sidebar {
+  background: hsl(var(--vault-sidebar-bg));
+  color: hsl(var(--vault-sidebar-fg));
+}
+.vault-nav-item {
+  color: hsl(var(--vault-sidebar-fg));
+  transition: all 0.15s ease;
+  border-radius: 0.5rem;
+}
+.vault-nav-item:hover {
+  background: hsl(var(--vault-sidebar-hover));
+  color: hsl(0 0% 100%);
+}
+.vault-nav-item.active {
+  background: hsl(var(--vault-sidebar-active));
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 0 20px hsl(var(--vault-sidebar-active) / 40%);
+}
+.vault-nav-group-label {
+  color: hsl(var(--vault-sidebar-fg) / 50%);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* ── Glass card effect ─────────────────────────────────────── */
+.glass-card {
+  backdrop-filter: blur(12px);
+  background: hsl(var(--card) / 80%);
+  border: 1px solid hsl(var(--border));
+}
+
+/* ── Stat card gradient accents ───────────────────────────── */
+.stat-violet { background: linear-gradient(135deg, hsl(252 87% 57% / 10%), hsl(252 87% 57% / 5%)); border-color: hsl(252 87% 57% / 20%); }
+.stat-blue   { background: linear-gradient(135deg, hsl(217 91% 60% / 10%), hsl(217 91% 60% / 5%)); border-color: hsl(217 91% 60% / 20%); }
+.stat-green  { background: linear-gradient(135deg, hsl(142 71% 45% / 10%), hsl(142 71% 45% / 5%)); border-color: hsl(142 71% 45% / 20%); }
+.stat-amber  { background: linear-gradient(135deg, hsl(38 92% 50% / 10%), hsl(38 92% 50% / 5%));   border-color: hsl(38 92% 50% / 20%); }
+
+/* ── Animations ────────────────────────────────────────────── */
+@keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in { animation: fade-in 0.3s ease both; }
+.animation-delay-100 { animation-delay: 100ms; }
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+
+/* ── Status pill ───────────────────────────────────────────── */
+.status-available  { @apply bg-green-500/10  text-green-600  dark:text-green-400 border-green-500/20; }
+.status-assigned   { @apply bg-blue-500/10   text-blue-600   dark:text-blue-400  border-blue-500/20; }
+.status-maintenance{ @apply bg-amber-500/10  text-amber-600  dark:text-amber-400 border-amber-500/20; }
+.status-retired    { @apply bg-red-500/10    text-red-600    dark:text-red-400   border-red-500/20; }
