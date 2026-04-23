@@ -38,11 +38,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(t);
 
       try {
-        // ✅ FIX: explicitly type API response
-        const me: User = (await api.me()) as User;
-        setUser(me);
+        // ✅ FIX: explicitly handle unknown API response
+        const me = await api.me();
+
+        setUser(me as User);
       } catch (err) {
         console.error("Auth error:", err);
+
         localStorage.removeItem("vg_token");
         setUser(null);
         setToken(null);
