@@ -1,4 +1,4 @@
-const BASE = "http://localhost:8000";
+const BASE = "https://opti-backend-1-g4i1.onrender.com";
 
 function getToken() {
   if (typeof window === "undefined") return null;
