@@ -21,16 +21,15 @@ export default function ReportsPage() {
 
   useEffect(() => {
     const loadStats = async () => {
-      // permission check first
       if (!hasPrivilege("view:reports")) {
         router.replace("/dashboard");
         return;
       }
 
       try {
-        // FIX: safely type API response
-        const data = (await api.stats()) as Stats;
-        setStats(data);
+        // ✅ FIX: remove unsafe unknown type
+        const data = await api.stats();
+        setStats(data as Stats);
       } catch (err) {
         console.error("Failed to load stats:", err);
       }
@@ -91,10 +90,7 @@ export default function ReportsPage() {
             cls: "stat-amber",
           },
         ].map((s) => (
-          <div
-            key={s.label}
-            className={`rounded-2xl border p-5 ${s.cls}`}
-          >
+          <div key={s.label} className={`rounded-2xl border p-5 ${s.cls}`}>
             <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-3">
               {s.icon}
             </div>
