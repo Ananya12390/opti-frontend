@@ -35,15 +35,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      try {
-        setToken(t);
+      setToken(t);
 
+      try {
         // ✅ FIX: explicitly type API response
         const me: User = (await api.me()) as User;
-
         setUser(me);
       } catch (err) {
-        console.error("Auth load failed:", err);
+        console.error("Auth error:", err);
         localStorage.removeItem("vg_token");
         setUser(null);
         setToken(null);
