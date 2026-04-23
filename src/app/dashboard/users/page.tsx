@@ -5,21 +5,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { User, Role } from "@/types";
-import {
-  Users,
-  Plus,
-  Trash2,
-  Loader2,
-  Shield,
-} from "lucide-react";
+import { Plus, Trash2, Loader2, Shield } from "lucide-react";
 
 const ROLE_COLORS: Record<string, string> = {
-  Admin:
-    "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
-  Manager:
-    "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-  Employee:
-    "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
+  Admin: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+  Manager: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  Employee: "bg-green-500/10 text-green-600 border-green-500/20",
 };
 
 /* ---------------- Add User Modal ---------------- */
@@ -38,22 +29,20 @@ function AddUserModal({
     email: "",
     username: "",
     password: "",
-    role_id: roles[0]?.id || 1,
+    role_id: roles[0]?.id ?? 1,
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const set =
-    (k: string) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-      setForm((f) => ({
-        ...f,
-        [k]: k === "role_id" ? Number(e.target.value) : e.target.value,
+  const handleChange =
+    (key: string) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      setForm((prev) => ({
+        ...prev,
+        [key]: key === "role_id" ? Number(e.target.value) : e.target.value,
       }));
-
-  const inputCls =
-    "w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm";
+    };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +53,7 @@ function AddUserModal({
       await api.users.create(form);
       onSave();
     } catch (err: any) {
-      setError(err.message || "Failed to create user");
+      setError(err?.message || "Failed to create user");
     } finally {
       setLoading(false);
     }
@@ -85,27 +74,22 @@ function AddUserModal({
             </div>
           )}
 
-          {[
-            ["name", "Full Name"],
-            ["email", "Email"],
-            ["username", "Username"],
-            ["password", "Password"],
-          ].map(([k, l]) => (
+          {["name", "email", "username", "password"].map((k) => (
             <input
               key={k}
               type={k === "password" ? "password" : "text"}
-              placeholder={l}
+              placeholder={k}
               value={(form as any)[k]}
-              onChange={set(k)}
-              className={inputCls}
+              onChange={handleChange(k)}
+              className="w-full p-2 border rounded"
               required
             />
           ))}
 
           <select
             value={form.role_id}
-            onChange={set("role_id")}
-            className={inputCls}
+            onChange={handleChange("role_id")}
+            className="w-full p-2 border rounded"
           >
             {roles.map((r) => (
               <option key={r.id} value={r.id}>
@@ -143,27 +127,29 @@ export default function UsersPage() {
       return;
     }
 
-    const load = async () => {
+    const loadData = async () => {
       try {
-        const usersRes = await api.users.list();
-        const rolesRes = await api.roles();
+        // ✅ FIX: force correct typing here
+        const usersData = (await api.users.list()) as User[];
+        const rolesData = (await api.roles()) as Role[];
 
-        setUsers(usersRes as User[]);
-        setRoles(rolesRes as Role[]);
+        setUsers(usersData);
+        setRoles(rolesData);
       } catch (err) {
-        console.error("Failed to load data", err);
+        console.error("Failed to load users/roles", err);
       } finally {
         setLoading(false);
       }
     };
 
-    load();
+    loadData();
   }, [hasPrivilege, router]);
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete user?")) return;
+
     await api.users.delete(id);
-    setUsers((u) => u.filter((x) => x.id !== id));
+    setUsers((prev) => prev.filter((u) => u.id !== id));
   };
 
   if (loading) {
@@ -191,7 +177,7 @@ export default function UsersPage() {
         )}
       </div>
 
-      {/* Users */}
+      {/* Users List */}
       <div className="space-y-3">
         {users.map((u) => (
           <div
@@ -206,7 +192,11 @@ export default function UsersPage() {
             <div className="flex items-center gap-3">
               <span className="text-xs">@{u.username}</span>
 
-              <span className="text-xs px-2 py-1 border rounded">
+              <span
+                className={`text-xs px-2 py-1 border rounded ${
+                  ROLE_COLORS[u.role.name] ?? ""
+                }`}
+              >
                 <Shield className="w-3 h-3 inline mr-1" />
                 {u.role.name}
               </span>
@@ -232,9 +222,10 @@ export default function UsersPage() {
         <AddUserModal
           roles={roles}
           onClose={() => setShowModal(false)}
-          onSave={() => {
+          onSave={async () => {
             setShowModal(false);
-            api.users.list().then((d) => setUsers(d as User[]));
+            const refreshed = (await api.users.list()) as User[];
+            setUsers(refreshed);
           }}
         />
       )}
