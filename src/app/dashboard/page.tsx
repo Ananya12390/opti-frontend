@@ -74,34 +74,39 @@ export default function DashboardPage() {
   const isAdmin = hasPrivilege("view:all_assets");
 
   useEffect(() => {
-    const load = async () => {
+    const loadData = async () => {
       try {
+        // FIX 1: cast API response safely
         const assetData = (await api.assets.list()) as Asset[];
         setAssets(assetData);
-      } catch (e) {
-        console.error("Assets load failed", e);
+      } catch (err) {
+        console.error("Assets load failed", err);
       }
 
       try {
         if (isAdmin) {
-          const statData = await api.stats();
-          setStats(statData as Stats);
+          // FIX 2: cast stats safely
+          const statData = (await api.stats()) as Stats;
+          setStats(statData);
         }
-      } catch (e) {
-        console.error("Stats load failed", e);
+      } catch (err) {
+        console.error("Stats load failed", err);
       }
     };
 
-    load();
+    loadData();
   }, [isAdmin]);
 
   const myAssets = assets.filter((a) => a.assigned_to === user?.id);
   const recentAssets = assets.slice(0, 5);
 
   const hour = new Date().getHours();
-
   const greeting =
-    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+    hour < 12
+      ? "Good morning"
+      : hour < 18
+      ? "Good afternoon"
+      : "Good evening";
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -109,10 +114,8 @@ export default function DashboardPage() {
       <div className="mb-8 animate-fade-in">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-2xl">👋</span>
-
           <h1 className="text-2xl font-bold text-foreground">
-            {greeting},{" "}
-            {user?.name ? user.name.split(" ")[0] : "User"}
+            {greeting}, {user?.name ? user.name.split(" ")[0] : "User"}
           </h1>
         </div>
 
@@ -183,9 +186,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Main content */}
+      {/* Assets list */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Assets */}
         <div className="lg:col-span-2 rounded-2xl border border-border bg-card">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
             <div>
@@ -202,7 +204,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="divide-y divide-border">
-            {(isAdmin ? recentAssets : myAssets).map((a, i) => (
+            {(isAdmin ? recentAssets : myAssets).map((a) => (
               <div
                 key={a.id}
                 className="px-5 py-3.5 flex items-center gap-4 hover:bg-muted/30"
