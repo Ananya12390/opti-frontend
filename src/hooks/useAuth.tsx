@@ -1,5 +1,12 @@
 "use client";
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { User } from "@/types";
 import { api } from "@/lib/api";
 
@@ -20,17 +27,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const t = localStorage.getItem("vg_token");
-    if (t) {
-      setToken(t);
-      api.me().then(setUser).catch(() => { localStorage.removeItem("vg_token"); }).finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
-    }
+    const initAuth = async () => {
+      const t = localStorage.getItem("vg_token");
+
+      if (!t) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setToken(t);
+
+        // ✅ FIX: explicitly type API response
+        const me: User = (await api.me()) as User;
+
+        setUser(me);
+      } catch (err) {
+        console.error("Auth load failed:", err);
+        localStorage.removeItem("vg_token");
+        setUser(null);
+        setToken(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
   const login = async (username: string, password: string) => {
     const data = await api.login(username, password);
+
     localStorage.setItem("vg_token", data.access_token);
     setToken(data.access_token);
     setUser(data.user);
@@ -42,9 +69,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
-  const hasPrivilege = (p: string) => !!user?.role.permissions.includes(p);
+  const hasPrivilege = (p: string) =>
+    !!user?.role?.permissions?.includes(p);
 
-  return <Ctx.Provider value={{ user, token, login, logout, isLoading, hasPrivilege }}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider
+      value={{ user, token, login, logout, isLoading, hasPrivilege }}
+    >
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export function useAuth() {
