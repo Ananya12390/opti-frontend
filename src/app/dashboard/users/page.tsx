@@ -53,7 +53,7 @@ function AddUserModal({
       }));
 
   const inputCls =
-    "w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary";
+    "w-full px-3 py-2 rounded-lg bg-secondary border border-border text-foreground text-sm";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,81 +71,55 @@ function AddUserModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-2xl animate-fade-in">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="font-semibold text-foreground">Add New User</h2>
-          <button
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            ✕
-          </button>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="bg-card border rounded-2xl w-full max-w-md">
+        <div className="flex justify-between px-6 py-4 border-b">
+          <h2 className="font-semibold">Add User</h2>
+          <button onClick={onClose}>✕</button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-3">
           {error && (
-            <div className="text-red-500 text-sm bg-red-500/10 px-3 py-2 rounded-lg">
+            <div className="text-red-500 text-sm bg-red-500/10 p-2 rounded">
               {error}
             </div>
           )}
 
           {[
-            ["name", "Full Name", "e.g. Jane Smith"],
-            ["email", "Email", "jane@company.com"],
-            ["username", "Username", "janesmith"],
-            ["password", "Password", "Min 6 characters"],
-          ].map(([k, l, p]) => (
-            <div key={k}>
-              <label className="text-xs text-muted-foreground mb-1 block">
-                {l}
-              </label>
-              <input
-                type={k === "password" ? "password" : "text"}
-                value={(form as any)[k]}
-                onChange={set(k)}
-                placeholder={p}
-                className={inputCls}
-                required
-              />
-            </div>
+            ["name", "Full Name"],
+            ["email", "Email"],
+            ["username", "Username"],
+            ["password", "Password"],
+          ].map(([k, l]) => (
+            <input
+              key={k}
+              type={k === "password" ? "password" : "text"}
+              placeholder={l}
+              value={(form as any)[k]}
+              onChange={set(k)}
+              className={inputCls}
+              required
+            />
           ))}
 
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">
-              Role
-            </label>
-            <select
-              value={form.role_id}
-              onChange={set("role_id")}
-              className={inputCls}
-            >
-              {roles.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={form.role_id}
+            onChange={set("role_id")}
+            className={inputCls}
+          >
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2 rounded-lg border text-sm"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 py-2 rounded-lg bg-primary text-white text-sm flex items-center justify-center gap-2"
-            >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              Add User
-            </button>
-          </div>
+          <button
+            disabled={loading}
+            className="w-full bg-primary text-white py-2 rounded-lg"
+          >
+            {loading ? "Adding..." : "Add User"}
+          </button>
         </form>
       </div>
     </div>
@@ -171,15 +145,13 @@ export default function UsersPage() {
 
     const load = async () => {
       try {
-        const [u, r] = await Promise.all([
-          api.users.list() as Promise<User[]>,
-          api.roles() as Promise<Role[]>,
-        ]);
+        const usersRes = await api.users.list();
+        const rolesRes = await api.roles();
 
-        setUsers(u);
-        setRoles(r);
+        setUsers(usersRes as User[]);
+        setRoles(rolesRes as Role[]);
       } catch (err) {
-        console.error("Failed to load users/roles", err);
+        console.error("Failed to load data", err);
       } finally {
         setLoading(false);
       }
@@ -189,8 +161,7 @@ export default function UsersPage() {
   }, [hasPrivilege, router]);
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Remove this user?")) return;
-
+    if (!confirm("Delete user?")) return;
     await api.users.delete(id);
     setUsers((u) => u.filter((x) => x.id !== id));
   };
@@ -198,7 +169,7 @@ export default function UsersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        <Loader2 className="w-6 h-6 animate-spin" />
       </div>
     );
   }
@@ -207,17 +178,12 @@ export default function UsersPage() {
     <div className="p-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Team Members</h1>
-          <p className="text-sm text-muted-foreground">
-            {users.length} users
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold">Team Members</h1>
 
         {hasPrivilege("manage:users") && (
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl"
+            className="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Add User
@@ -225,12 +191,12 @@ export default function UsersPage() {
         )}
       </div>
 
-      {/* Users List */}
+      {/* Users */}
       <div className="space-y-3">
         {users.map((u) => (
           <div
             key={u.id}
-            className="flex items-center justify-between p-4 border rounded-xl bg-card"
+            className="flex justify-between p-4 border rounded-xl bg-card"
           >
             <div>
               <p className="font-medium">{u.name}</p>
@@ -240,11 +206,7 @@ export default function UsersPage() {
             <div className="flex items-center gap-3">
               <span className="text-xs">@{u.username}</span>
 
-              <span
-                className={`text-xs px-2 py-1 rounded border ${
-                  ROLE_COLORS[u.role.name] || ""
-                }`}
-              >
+              <span className="text-xs px-2 py-1 border rounded">
                 <Shield className="w-3 h-3 inline mr-1" />
                 {u.role.name}
               </span>
@@ -256,11 +218,8 @@ export default function UsersPage() {
               />
 
               {hasPrivilege("manage:users") && (
-                <button
-                  onClick={() => handleDelete(u.id)}
-                  className="text-red-500 hover:bg-red-500/10 p-1 rounded"
-                >
-                  <Trash2 className="w-4 h-4" />
+                <button onClick={() => handleDelete(u.id)}>
+                  <Trash2 className="w-4 h-4 text-red-500" />
                 </button>
               )}
             </div>
@@ -275,7 +234,7 @@ export default function UsersPage() {
           onClose={() => setShowModal(false)}
           onSave={() => {
             setShowModal(false);
-            api.users.list().then((data) => setUsers(data as User[]));
+            api.users.list().then((d) => setUsers(d as User[]));
           }}
         />
       )}
